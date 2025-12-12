@@ -29,30 +29,44 @@ jobs:
         run: |
           vcpkg install pdcurses:x64-windows
           
-      - name: Create PDCurses CMake config
-        run: |
-          $configDir = "build\pdcurses"
-          New-Item -ItemType Directory -Force -Path $configDir
-          @'
-          set(PDCurses_FOUND TRUE)
-          set(PDCurses_INCLUDE_DIRS "${VCPKG_ROOT}/installed/x64-windows/include")
-          set(PDCurses_LIBRARIES "${VCPKG_ROOT}/installed/x64-windows/lib/pdcurses.lib")
-          add_library(pdcurses UNKNOWN IMPORTED)
-          set_target_properties(pdcurses PROPERTIES
-            IMPORTED_LOCATION "${VCPKG_ROOT}/installed/x64-windows/lib/pdcurses.lib"
-            INTERFACE_INCLUDE_DIRECTORIES "${VCPKG_ROOT}/installed/x64-windows/include"
-          )
-          '@ | Out-File -FilePath "$configDir\pdcursesConfig.cmake" -Encoding utf8
-
       - name: Configure CMake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" `
             -DVCPKG_TARGET_TRIPLET=x64-windows `
-            -G "Visual Studio 17 2022" -A x64 `
-            -Dpdcurses_DIR="${PWD}/build/pdcurses"
+            -G "Visual Studio 17 2022" -A x64
         env:
           VCPKG_DEFAULT_TRIPLET: x64-windows
+          
+      - name: Patch vcxproj with PDCurses paths
+        run: |
+          $vcxproj = "build\copywork.vcxproj"
+          [xml]$xml = Get-Content $vcxproj
+          $ns = New-Object System.Xml.XmlNamespaceManager($xml.NameTable)
+          $ns.AddNamespace("ns", "http://schemas.microsoft.com/developer/msbuild/2003")
+          
+          $pdcursesInclude = "${env:VCPKG_ROOT}\installed\x64-windows\include"
+          $pdcursesLib = "${env:VCPKG_ROOT}\installed\x64-windows\lib\pdcurses.lib"
+          
+          # Add include directory to all ItemDefinitionGroup elements
+          $itemDefGroups = $xml.SelectNodes("//ns:ItemDefinitionGroup", $ns)
+          foreach ($group in $itemDefGroups) {
+            $clCompile = $group.SelectSingleNode("ns:ClCompile", $ns)
+            if ($clCompile -ne $null) {
+              $includeNode = $xml.CreateElement("AdditionalIncludeDirectories", $xml.DocumentElement.NamespaceURI)
+              $includeNode.InnerText = "$pdcursesInclude;%(AdditionalIncludeDirectories)"
+              $clCompile.AppendChild($includeNode) | Out-Null
+            }
+            
+            $link = $group.SelectSingleNode("ns:Link", $ns)
+            if ($link -ne $null) {
+              $libNode = $xml.CreateElement("AdditionalDependencies", $xml.DocumentElement.NamespaceURI)
+              $libNode.InnerText = "$pdcursesLib;%(AdditionalDependencies)"
+              $link.AppendChild($libNode) | Out-Null
+            }
+          }
+          
+          $xml.Save((Resolve-Path $vcxproj))
 
       - name: Build
         run: cmake --build build --config Release
