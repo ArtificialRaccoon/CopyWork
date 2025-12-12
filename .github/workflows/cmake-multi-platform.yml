@@ -10,11 +10,8 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [windows-latest]
         include:
-          - os: ubuntu-latest
-            artifact_name: copywork-linux
-            asset_name: copywork-linux-x64
           - os: windows-latest
             artifact_name: copywork-windows-x64.zip
             asset_name: copywork-windows-x64.zip
@@ -23,43 +20,22 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies (Ubuntu)
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libncurses-dev
-
       - name: Setup vcpkg (Windows)
-        if: matrix.os == 'windows-latest'
         uses: lukka/run-vcpkg@v11
         with:
           vcpkgGitCommitId: 'c8696863d371ab7f46e213d8f5ca923c4aef2a00'
 
       - name: Install PDCurses (Windows)
-        if: matrix.os == 'windows-latest'
         run: |
           vcpkg install pdcurses:x64-windows
 
       - name: Configure CMake
-        run: |
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
-          else
-            cmake -B build -DCMAKE_BUILD_TYPE=Release
-          fi
-        shell: bash
+        run: cmake -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=$env:VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
 
       - name: Build
         run: cmake --build build --config Release
 
-      - name: Prepare artifact (Ubuntu/macOS)
-        if: matrix.os != 'windows-latest'
-        run: |
-          cp build/copywork ${{ matrix.artifact_name }}
-          chmod +x ${{ matrix.artifact_name }}
-
-      - name: Prepare artifact (Windows)
-        if: matrix.os == 'windows-latest'
+      - name: Prepare artifact
         run: |
           mkdir windows-release
           copy build\Release\copywork.exe windows-release\
@@ -119,7 +95,6 @@ jobs:
             - Built from latest main branch
             
             ## Downloads
-            - Linux: copywork-linux-x64
             - Windows: copywork-windows-x64.zip (contains copywork.exe and pdcurses.dll)
           files: |
             artifacts/*/*
