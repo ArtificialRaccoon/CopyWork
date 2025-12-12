@@ -28,13 +28,31 @@ jobs:
       - name: Install PDCurses (Windows)
         run: |
           vcpkg install pdcurses:x64-windows
-          vcpkg integrate install
+          
+      - name: Create PDCurses CMake config
+        run: |
+          $configDir = "build\pdcurses"
+          New-Item -ItemType Directory -Force -Path $configDir
+          @'
+          set(PDCurses_FOUND TRUE)
+          set(PDCurses_INCLUDE_DIRS "${VCPKG_ROOT}/installed/x64-windows/include")
+          set(PDCurses_LIBRARIES "${VCPKG_ROOT}/installed/x64-windows/lib/pdcurses.lib")
+          add_library(pdcurses UNKNOWN IMPORTED)
+          set_target_properties(pdcurses PROPERTIES
+            IMPORTED_LOCATION "${VCPKG_ROOT}/installed/x64-windows/lib/pdcurses.lib"
+            INTERFACE_INCLUDE_DIRECTORIES "${VCPKG_ROOT}/installed/x64-windows/include"
+          )
+          '@ | Out-File -FilePath "$configDir\pdcursesConfig.cmake" -Encoding utf8
 
       - name: Configure CMake
         run: |
           cmake -B build -DCMAKE_BUILD_TYPE=Release `
             -DCMAKE_TOOLCHAIN_FILE="${env:VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" `
-            -DVCPKG_TARGET_TRIPLET=x64-windows
+            -DVCPKG_TARGET_TRIPLET=x64-windows `
+            -G "Visual Studio 17 2022" -A x64 `
+            -Dpdcurses_DIR="${PWD}/build/pdcurses"
+        env:
+          VCPKG_DEFAULT_TRIPLET: x64-windows
 
       - name: Build
         run: cmake --build build --config Release
