@@ -50,9 +50,9 @@ void Renderer::RedrawText(AppStateManager& state)
 				colorAttr = Curses::COLORPAIR(COLOR_INCORRECT);
 		}
 
-		Curses::attron(colorAttr);
-		Curses::mvaddch(y - state.GetScrollY(), x, c);
-		Curses::attroff(colorAttr);
+		Curses::wrapped_attron(colorAttr);
+		Curses::wrapped_mvaddch(y - state.GetScrollY(), x, c);
+		Curses::wrapped_attroff(colorAttr);
 
 		x++;
 	}
