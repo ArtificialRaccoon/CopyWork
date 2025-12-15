@@ -76,7 +76,12 @@ void Renderer::UpdateScreen(AppStateManager& state)
 	screenY = coords.first;
 	screenX = coords.second;
 
-	Curses::clear(); 
+#if defined(_WIN32) || defined(_WIN64)
+	Curses::clear();
+#else
+	Curses::erase();
+#endif
+	
 	RedrawText(state);
 	if (screenY != -1 && screenX != -1)
 		Curses::move(screenY, screenX);
