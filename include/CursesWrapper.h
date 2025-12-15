@@ -25,6 +25,7 @@ namespace Curses
 #endif                 
     }
     inline void clear() { ::clear(); }
+    inline void erase() { ::erase(); }
     inline void cbreak() { ::cbreak(); }
     inline void noecho() { ::noecho(); }
     inline void keypad(WINDOW* win, bool bf) { ::keypad(win, bf); }
