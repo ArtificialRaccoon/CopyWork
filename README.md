@@ -5,8 +5,31 @@ A curses based "copywork" tool.  Allows you to perform copywork on a textfile in
 
 # What is Copywork?
 
-Copywork is the practice of manually transcribing texts you admire—word by word, punctuation mark by punctuation mark—to supposedly absorb the author's style through repetition.
+Copywork is the practice of manually transcribing an author's work, word by word, to supposedly absorb the author's style through repetition.
 
-Is it pseudoscience? Probably. But it does have a real benefit: it forces you to slow down and notice how good writing actually works. You catch the rhythm of sentences, the placement of commas, the structure of paragraphs. You can't skim when your fingers are doing the work.
+It is very likely to be pseudoscience in my opinion. It does have one tangible use: apprication of an author's style.  This may, or may not, help you to improve your own writing.
 
-Think of it as learning to paint by copying the masters—you won't become them, but you'll develop a deeper appreciation for their craft.
+# Why did you fart this out?
+
+Honestly, I wanted to give copyworking a shot; but every copywork tool I ran into was a god awful webapp.  Each one was laggy, and honestly, I hate when simple things require a god damn webbrowser.
+
+# Building
+
+## Windows
+
+If you're on Windows, you can build this easily using VSCode.  Just make sure you have VCPKG installed, and built PDCurses.  As long as VCPKG is in your path, it should get picked up.
+
+Or just use prebuilt binary.
+
+## Linux
+
+Assuming your using a Debian based distro, just install ncurses, configure, and make:
+
+```
+sudo apt-get install libncurses-dev
+mkdir build
+cd build
+cmake ..
+cmake --build .
+```
+
